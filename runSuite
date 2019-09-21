@@ -1,0 +1,40 @@
+#!/bin/bash
+temp=$(mktemp)
+if [ $# -eq 2 ]; then
+   for test in $(cat ${1}); do
+      if [ -r ${test}.in -a -r ${test}.out -a -r ${test}.args ]; then
+         ./$2 $(cat ${test}.args) < ${test}.in 1> ${temp}
+         if [ "$(cat ${test}.out)" != "$(cat ${temp})" ]; then
+            echo "Test failed: ${test}"
+            echo "Input:"
+            cat ${test}.in
+            echo "Expected:"
+            cat ${test}.out
+            echo "Actual:"
+            cat ${temp}
+         fi
+         rm ${temp}
+      elif [ -r ${test}.in -a -r ${test}.out ]; then
+         ./$2 < ${test}.in 1> ${temp}
+         if [ "$(cat ${test}.out)" != "$(cat ${temp})" ]; then
+            echo "Test failed: ${test}"
+            echo "Input:"
+            cat ${test}.in
+            echo "Expected:"
+            cat ${test}.out
+            echo "Actual:"
+            cat ${temp}
+         fi
+         rm ${temp}
+      elif [ -e ${test}.in -a -e ${test}.out ]; then
+         echo "unreadable ${test}.in or ${test}.out files" 1>&2
+         exit 3
+      else
+         echo "missing ${test}.in or ${test}.out files" 1>&2
+         exit 4
+      fi
+   done
+else 
+   echo "incorrect number of command line arguments" 1>&2
+   exit 5
+fi
